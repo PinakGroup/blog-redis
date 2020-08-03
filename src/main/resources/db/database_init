@@ -1,0 +1,107 @@
+-- table user
+CREATE TABLE user (
+    user_id BIGINT(20)  AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    created DATETIME ,
+    email VARCHAR(50),
+    enabled BIT(1),
+    password VARCHAR(255) NOT NULL,
+    username VARCHAR(255) NOT NULL
+);
+
+# table subreddit
+DROP TABLE  IF EXISTS subreddit;
+CREATE TABLE subreddit (
+   subreddit_id BIGINT(20) AUTO_INCREMENT PRIMARY KEY NOT NULL,
+   created DATETIME ,
+   description VARCHAR(255),
+   name VARCHAR(255),
+   user_id BIGINT(20) NOT NULL,
+   FOREIGN KEY (user_id) REFERENCES user(user_id)
+) ENGINE=INNODB;
+
+# table post
+DROP TABLE  IF EXISTS post;
+CREATE TABLE post (
+    post_id BIGINT(20)  AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    created_date DATETIME ,
+    description LONGTEXT,
+    post_name VARCHAR(255),
+    url VARCHAR(255),
+    vote_count INT(11),
+    subreddit_id BIGINT(20) NOT NULL,
+    user_id BIGINT(20) NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES user(user_id),
+    FOREIGN KEY (subreddit_id) REFERENCES subreddit(subreddit_id)
+);
+
+# table subreddit_post
+DROP TABLE  IF EXISTS subreddit_posts;
+
+CREATE TABLE subreddit_posts (
+     subreddit_id BIGINT(20)  NOT NULL,
+     posts_post_id BIGINT(20) NOT NULL,
+     users_user_id BIGINT(20) NOT NULL,
+     FOREIGN KEY (subreddit_id) REFERENCES subreddit(subreddit_id),
+     FOREIGN KEY (posts_post_id) REFERENCES post(post_id),
+     FOREIGN KEY (users_user_id) REFERENCES user(user_id)
+) ENGINE=INNODB;
+
+# table vote
+DROP TABLE  IF EXISTS vote;
+CREATE TABLE vote (
+      vote_id BIGINT(20)  AUTO_INCREMENT PRIMARY KEY NOT NULL,
+      vote_type INT(11),
+      post_id BIGINT(20) NOT NULL,
+      user_id BIGINT(20) NOT NULL,
+      FOREIGN KEY (user_id) REFERENCES user(user_id),
+      FOREIGN KEY (post_id) REFERENCES post(post_id)
+);
+
+# table comment
+DROP TABLE  IF EXISTS comment;
+CREATE TABLE comment (
+      comment_id BIGINT(20) AUTO_INCREMENT PRIMARY KEY NOT NULL,
+      created_date DATETIME ,
+      text VARCHAR(255),
+      post_id BIGINT(20) NOT NULL,
+      user_id BIGINT(20) NOT NULL,
+      FOREIGN KEY (user_id) REFERENCES subreddit_posts(users_user_id),
+      FOREIGN KEY (post_id) REFERENCES subreddit_posts(posts_post_id)
+);
+
+# table user_subreddits
+CREATE TABLE user_subreddits (
+     user_user_id BIGINT(20) NOT NULL,
+     subreddits_id BIGINT(20) NOT NULL,
+     FOREIGN KEY (user_user_id) REFERENCES user(user_id)
+) ENGINE=INNODB;
+
+# table token
+DROP TABLE  IF EXISTS token;
+CREATE TABLE token (
+     token_id BIGINT(20)  AUTO_INCREMENT PRIMARY KEY NOT NULL,
+     expiry_date DATETIME ,
+     token VARCHAR(255),
+     user_user_id BIGINT(20) NOT NULL,
+     FOREIGN KEY (user_user_id) REFERENCES user_subreddits(user_user_id)
+);
+
+# table refresh_token
+DROP TABLE  IF EXISTS refresh_token;
+CREATE TABLE refresh_token (
+     refresh_token_id BIGINT(20) AUTO_INCREMENT PRIMARY KEY NOT NULL,
+     created_date DATETIME ,
+     token VARCHAR(255)
+);
+
+# table user_comments
+CREATE TABLE user_comments (
+     user_user_id BIGINT(20),
+     user_comments_id BIGINT(20)
+);
+
+# table user_posts
+CREATE TABLE user_posts (
+   user_user_id BIGINT(20),
+   posts_post_id BIGINT(20)
+);
