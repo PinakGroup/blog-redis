@@ -23,7 +23,7 @@ public class PostController {
     @PostMapping
     public ResponseEntity<Void> createPost(@RequestBody PostRequest postRequest) {
         postService.save(postRequest);
-        return new ResponseEntity<>(HttpStatus.CREATED).body("");
+        return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
     @GetMapping

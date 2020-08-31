@@ -6,7 +6,9 @@ import com.truongtd.blogredis.entities.VerificationToken;
 import com.truongtd.blogredis.exceptions.SpringRedditException;
 import com.truongtd.blogredis.model.AuthenticationResponse;
 import com.truongtd.blogredis.model.LoginRequest;
+import com.truongtd.blogredis.model.RefreshTokenRequest;
 import com.truongtd.blogredis.model.RegisterRequest;
+import com.truongtd.blogredis.repository.RefreshTokenRepository;
 import com.truongtd.blogredis.repository.UserRepository;
 import com.truongtd.blogredis.repository.VerificationTokenRepository;
 import com.truongtd.blogredis.sercurity.JwtProvider;
@@ -22,6 +24,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -46,6 +49,8 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
 
     private final JwtProvider jwtProvider;
+
+    private final RefreshTokenService refreshTokenService;
 
     @Transactional
     public void signup(RegisterRequest registerRequest) {
@@ -96,7 +101,12 @@ public class AuthService {
                 loginRequest.getPassword()));
         SecurityContextHolder.getContext().setAuthentication(authenticate);
         String authenticationToken = jwtProvider.generateToken(authenticate);
-        return new AuthenticationResponse(authenticationToken, loginRequest.getUsername());
+        return  AuthenticationResponse.builder()
+                .authenticationToken(authenticationToken)
+                .refreshToken(refreshTokenService.generateRefreshToken().getToken())
+                .expiresAt(Instant.now().plusMillis(jwtProvider.getJwtExpirationInMillis()))
+                .username(loginRequest.getUsername())
+                .build();
     }
 
     @Transactional(readOnly = true)
@@ -110,5 +120,17 @@ public class AuthService {
     public boolean isLoggedIn() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return !(authentication instanceof AnonymousAuthenticationToken) && authentication.isAuthenticated();
+    }
+
+    public AuthenticationResponse refreshToken(RefreshTokenRequest refreshTokenRequest) {
+
+        refreshTokenService.validateRefreshToken(refreshTokenRequest.getRefreshToken());
+        String token = jwtProvider.generateTokenWithUserName(refreshTokenRequest.getUsername());
+        return AuthenticationResponse.builder()
+                .authenticationToken(token)
+                .refreshToken(refreshTokenRequest.getRefreshToken())
+                .expiresAt(Instant.now().plusMillis(jwtProvider.getJwtExpirationInMillis()))
+                .username(refreshTokenRequest.getUsername())
+                .build();
     }
 }
